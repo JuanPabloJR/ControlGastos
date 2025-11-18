@@ -1,0 +1,324 @@
+<!-- src/app/pages/configuracion/configuracion.page.html -->
+
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Configuración</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="ion-padding">
+    
+    <!-- Información del Usuario -->
+    <ion-card class="user-card">
+      <ion-card-content>
+        <div class="user-avatar">
+          <ion-icon name="person-outline"></ion-icon>
+        </div>
+        <h2>{{ usuario?.nombre }}</h2>
+        <p>{{ usuario?.email }}</p>
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          size="small"
+          (click)="abrirModalPerfil()"
+        >
+          Editar Perfil
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Cuenta -->
+    <div class="section-header">
+      <h3>
+        <ion-icon name="person-outline"></ion-icon>
+        Cuenta
+      </h3>
+    </div>
+
+    <ion-list>
+      <ion-item button (click)="abrirModalPerfil()">
+        <ion-icon name="person-outline" slot="start"></ion-icon>
+        <ion-label>
+          <h3>Información Personal</h3>
+          <p>Actualiza tu nombre y email</p>
+        </ion-label>
+      </ion-item>
+
+      <ion-item button (click)="abrirModalPassword()">
+        <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
+        <ion-label>
+          <h3>Cambiar Contraseña</h3>
+          <p>Actualiza tu contraseña de acceso</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Preferencias -->
+    <div class="section-header">
+      <h3>
+        <ion-icon name="settings-outline"></ion-icon>
+        Preferencias
+      </h3>
+    </div>
+
+    <ion-list *ngIf="configuracion">
+      <ion-item>
+        <ion-icon name="moon-outline" slot="start"></ion-icon>
+        <ion-select
+          label="Tema"
+          [(ngModel)]="configuracion.tema"
+          (ionChange)="cambiarTema($event)"
+        >
+          <ion-select-option value="light">Claro</ion-select-option>
+          <ion-select-option value="dark">Oscuro</ion-select-option>
+          <ion-select-option value="auto">Automático</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="cash-outline" slot="start"></ion-icon>
+        <ion-select
+          label="Moneda"
+          [(ngModel)]="configuracion.moneda"
+          (ionChange)="actualizarConfiguracion()"
+        >
+          <ion-select-option value="MXN">MXN ($)</ion-select-option>
+          <ion-select-option value="USD">USD ($)</ion-select-option>
+          <ion-select-option value="EUR">EUR (€)</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="globe-outline" slot="start"></ion-icon>
+        <ion-select
+          label="Idioma"
+          [(ngModel)]="configuracion.idioma"
+          (ionChange)="actualizarConfiguracion()"
+        >
+          <ion-select-option value="es">Español</ion-select-option>
+          <ion-select-option value="en">English</ion-select-option>
+        </ion-select>
+      </ion-item>
+    </ion-list>
+
+    <!-- Notificaciones -->
+    <div class="section-header">
+      <h3>
+        <ion-icon name="notifications-outline"></ion-icon>
+        Notificaciones
+      </h3>
+    </div>
+
+    <ion-list *ngIf="configuracion">
+      <ion-item>
+        <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
+        <ion-toggle 
+          [(ngModel)]="configuracion.notificaciones.presupuestos"
+          (ionChange)="onCambioNotificacionPresupuestos($event)"
+        >
+          Alertas de presupuestos
+        </ion-toggle>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="alarm-outline" slot="start"></ion-icon>
+        <ion-toggle 
+          [(ngModel)]="configuracion.notificaciones.recordatorios"
+          (ionChange)="actualizarConfiguracion()"
+        >
+          Recordatorios
+        </ion-toggle>
+      </ion-item>
+
+      <ion-item>
+        <ion-icon name="stats-chart-outline" slot="start"></ion-icon>
+        <ion-toggle 
+          [(ngModel)]="configuracion.notificaciones.resumenDiario"
+          (ionChange)="actualizarConfiguracion()"
+        >
+          Resumen diario (8 PM)
+        </ion-toggle>
+      </ion-item>
+      
+      <!-- Botón de prueba -->
+      <ion-item button (click)="probarNotificacion()">
+        <ion-icon name="flask-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h3>Probar Notificación</h3>
+          <p>Enviar una notificación de prueba</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Datos y Respaldo -->
+    <div class="section-header">
+      <h3>
+        <ion-icon name="save-outline"></ion-icon>
+        Datos y Respaldo
+      </h3>
+    </div>
+
+    <ion-list>
+      <ion-item button (click)="exportarDatos()">
+        <ion-icon name="download-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h3>Exportar Datos</h3>
+          <p>Descargar respaldo de tus datos</p>
+        </ion-label>
+      </ion-item>
+
+      <ion-item button (click)="importarDatos()">
+        <ion-icon name="cloud-upload-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h3>Importar Datos</h3>
+          <p>Restaurar desde un respaldo</p>
+        </ion-label>
+      </ion-item>
+
+      <ion-item button (click)="limpiarDatos()">
+        <ion-icon name="trash-outline" slot="start" color="danger"></ion-icon>
+        <ion-label color="danger">
+          <h3>Limpiar Todos los Datos</h3>
+          <p>Eliminar toda la información</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Sesión -->
+    <div class="section-header">
+      <h3>
+        <ion-icon name="exit-outline"></ion-icon>
+        Sesión
+      </h3>
+    </div>
+
+    <ion-list>
+      <ion-item button (click)="cerrarSesion()">
+        <ion-icon name="log-out-outline" slot="start" color="medium"></ion-icon>
+        <ion-label>
+          <h3>Cerrar Sesión</h3>
+        </ion-label>
+      </ion-item>
+
+      <ion-item button (click)="eliminarCuenta()">
+        <ion-icon name="trash-outline" slot="start" color="danger"></ion-icon>
+        <ion-label color="danger">
+          <h3>Eliminar Cuenta</h3>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Información de la App -->
+    <div class="app-info">
+      <p>Control de Gastos Personales</p>
+      <p>Versión 1.0.0</p>
+    </div>
+
+  </div>
+
+  <!-- Modal de Perfil -->
+  <ion-modal [isOpen]="mostrarModalPerfil" (didDismiss)="cerrarModalPerfil()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Editar Perfil</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cerrarModalPerfil()">
+              <ion-icon name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-input
+            label="Nombre completo"
+            labelPlacement="floating"
+            type="text"
+            [(ngModel)]="perfilEdit.nombre"
+            placeholder="Tu nombre"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            label="Email"
+            labelPlacement="floating"
+            type="email"
+            [(ngModel)]="perfilEdit.email"
+            placeholder="tu@email.com"
+          ></ion-input>
+        </ion-item>
+
+        <ion-button 
+          expand="block" 
+          (click)="guardarPerfil()"
+          class="ion-margin-top"
+        >
+          <ion-icon name="save-outline" slot="start"></ion-icon>
+          Guardar Cambios
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal de Contraseña -->
+  <ion-modal [isOpen]="mostrarModalPassword" (didDismiss)="cerrarModalPassword()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Cambiar Contraseña</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cerrarModalPassword()">
+              <ion-icon name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-input
+            label="Contraseña actual"
+            labelPlacement="floating"
+            type="password"
+            [(ngModel)]="passwordEdit.actual"
+            placeholder="••••••••"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            label="Nueva contraseña"
+            labelPlacement="floating"
+            type="password"
+            [(ngModel)]="passwordEdit.nueva"
+            placeholder="••••••••"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            label="Confirmar nueva contraseña"
+            labelPlacement="floating"
+            type="password"
+            [(ngModel)]="passwordEdit.confirmar"
+            placeholder="••••••••"
+          ></ion-input>
+        </ion-item>
+
+        <ion-button 
+          expand="block" 
+          (click)="cambiarPassword()"
+          class="ion-margin-top"
+        >
+          <ion-icon name="shield-checkmark-outline" slot="start"></ion-icon>
+          Actualizar Contraseña
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+</ion-content>

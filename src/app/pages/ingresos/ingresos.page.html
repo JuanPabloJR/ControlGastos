@@ -1,0 +1,193 @@
+<!-- src/app/pages/ingresos/ingresos.page.html -->
+
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Ingresos</ion-title>
+  </ion-toolbar>
+  
+  <ion-toolbar>
+    <ion-searchbar
+      [(ngModel)]="terminoBusqueda"
+      (ionInput)="onBuscar($event)"
+      placeholder="Buscar ingresos..."
+      animated="true"
+    ></ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="ion-padding">
+    
+    <!-- Resumen y Filtros -->
+    <ion-card class="resumen-card">
+      <ion-card-content>
+        <div class="resumen-total">
+          <span class="label">Total Ingresos</span>
+          <span class="monto">${{ totalIngresos.toFixed(2) }}</span>
+        </div>
+        
+        <ion-segment 
+          [(ngModel)]="periodoFiltro" 
+          (ionChange)="onCambiarPeriodo($event)"
+          class="ion-margin-top"
+        >
+          <ion-segment-button value="semana">
+            <ion-label>Semana</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="mes">
+            <ion-label>Mes</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="todos">
+            <ion-label>Todos</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+        
+        <ion-item lines="none" class="ion-margin-top">
+          <ion-icon name="filter-outline" slot="start"></ion-icon>
+          <ion-select
+            [(ngModel)]="fuenteFiltro"
+            (ionChange)="onCambiarFuente($event)"
+            placeholder="Todas las fuentes"
+          >
+            <ion-select-option value="todos">Todas las fuentes</ion-select-option>
+            <ion-select-option *ngFor="let fuente of fuentes" [value]="fuente.nombre">
+              {{ fuente.nombre }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Lista de Ingresos -->
+    <div *ngIf="ingresosFiltrados.length > 0">
+      <ion-list>
+        <ion-item-sliding *ngFor="let ingreso of ingresosFiltrados">
+          <ion-item lines="full">
+            <div class="ingreso-item">
+              <div 
+                class="fuente-icon" 
+                [style.background-color]="obtenerColorFuente(ingreso.fuente)"
+              >
+                <ion-icon [name]="obtenerIconoFuente(ingreso.fuente)"></ion-icon>
+              </div>
+              
+              <div class="ingreso-info">
+                <div class="ingreso-header">
+                  <strong>{{ ingreso.fuente }}</strong>
+                  <span class="ingreso-monto">${{ ingreso.monto.toFixed(2) }}</span>
+                </div>
+                <div class="ingreso-details">
+                  <small *ngIf="ingreso.descripcion">{{ ingreso.descripcion }}</small>
+                  <small class="ingreso-fecha">{{ formatearFecha(ingreso.fecha) }}</small>
+                </div>
+              </div>
+            </div>
+          </ion-item>
+          
+          <ion-item-options side="end">
+            <ion-item-option color="primary" (click)="abrirModalEditar(ingreso)">
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-item-option>
+            <ion-item-option color="danger" (click)="confirmarEliminar(ingreso)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+      </ion-list>
+    </div>
+
+    <!-- Estado vacío -->
+    <div *ngIf="ingresosFiltrados.length === 0" class="empty-state">
+      <ion-icon name="wallet-outline"></ion-icon>
+      <p>No hay ingresos registrados</p>
+      <ion-button (click)="abrirModalNuevo()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Agregar primer ingreso
+      </ion-button>
+    </div>
+
+  </div>
+
+  <!-- Botón flotante -->
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="abrirModalNuevo()">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <!-- Modal de Agregar/Editar -->
+  <ion-modal [isOpen]="mostrarModal" (didDismiss)="cerrarModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>{{ modoEdicion ? 'Editar Ingreso' : 'Nuevo Ingreso' }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cerrarModal()">
+              <ion-icon name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-input
+            label="Monto"
+            labelPlacement="floating"
+            type="number"
+            [(ngModel)]="nuevoIngreso.monto"
+            placeholder="0.00"
+          >
+            <div slot="start">$</div>
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-select
+            label="Fuente"
+            labelPlacement="floating"
+            [(ngModel)]="nuevoIngreso.fuente"
+            placeholder="Selecciona una fuente"
+          >
+            <ion-select-option *ngFor="let fuente of fuentes" [value]="fuente.nombre">
+              {{ fuente.nombre }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            label="Fecha"
+            labelPlacement="floating"
+            type="date"
+            [(ngModel)]="nuevoIngreso.fecha"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-textarea
+            label="Descripción (opcional)"
+            labelPlacement="floating"
+            [(ngModel)]="nuevoIngreso.descripcion"
+            placeholder="Añade una nota..."
+            rows="3"
+          ></ion-textarea>
+        </ion-item>
+
+        <ion-button 
+          expand="block" 
+          (click)="guardarIngreso()"
+          class="ion-margin-top"
+        >
+          <ion-icon name="save-outline" slot="start"></ion-icon>
+          {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+</ion-content>

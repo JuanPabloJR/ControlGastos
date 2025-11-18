@@ -1,0 +1,217 @@
+// src/app/pages/presupuestos/presupuestos.page.scss
+
+.resumen-global {
+  margin: 0 0 1rem 0;
+  
+  h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    color: var(--ion-color-dark);
+  }
+  
+  .stat-item {
+    text-align: center;
+    padding: 0.5rem;
+    
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--ion-color-medium);
+      margin-bottom: 0.25rem;
+    }
+    
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: bold;
+      
+      &.primary { color: var(--ion-color-primary); }
+      &.success { color: var(--ion-color-success); }
+      &.danger { color: var(--ion-color-danger); }
+    }
+  }
+  
+  .progress-global {
+    margin-top: 1rem;
+    
+    ion-progress-bar {
+      height: 10px;
+      border-radius: 5px;
+    }
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 1rem 0;
+  color: var(--ion-color-dark);
+}
+
+.presupuesto-item {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  
+  .categoria-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+    
+    ion-icon {
+      font-size: 1.5rem;
+      color: white;
+    }
+  }
+  
+  .presupuesto-info {
+    flex: 1;
+    min-width: 0;
+    
+    .presupuesto-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      
+      div {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      
+      strong {
+        font-size: 1rem;
+      }
+      
+      ion-chip {
+        margin: 0;
+        height: 24px;
+        font-size: 0.75rem;
+      }
+    }
+    
+    .presupuesto-montos {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      
+      .gastado {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--ion-color-danger);
+      }
+      
+      .separador {
+        font-size: 1rem;
+        color: var(--ion-color-medium);
+      }
+      
+      .total {
+        font-size: 1rem;
+        color: var(--ion-color-medium);
+      }
+    }
+    
+    .presupuesto-progress {
+      position: relative;
+      margin-bottom: 0.5rem;
+      
+      ion-progress-bar {
+        height: 8px;
+        border-radius: 4px;
+      }
+      
+      .porcentaje-texto {
+        position: absolute;
+        right: 0;
+        top: -20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--ion-color-medium-shade);
+      }
+    }
+    
+    .presupuesto-disponible {
+      small {
+        color: var(--ion-color-success);
+        font-weight: 500;
+      }
+    }
+    
+    .presupuesto-excedido {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      
+      small {
+        color: var(--ion-color-danger);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      
+      ion-icon {
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  
+  ion-icon {
+    font-size: 5rem;
+    color: var(--ion-color-medium);
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+    margin-bottom: 0.5rem;
+    
+    &.subtitle {
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+  }
+}
+
+.info-box {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  
+  ion-icon {
+    flex-shrink: 0;
+    font-size: 1.5rem;
+    margin-top: 0.1rem;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--ion-color-medium-shade);
+    line-height: 1.4;
+  }
+}
+
+ion-fab {
+  margin-bottom: 1rem;
+  margin-right: 1rem;
+}

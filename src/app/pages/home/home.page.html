@@ -1,0 +1,157 @@
+<!-- src/app/pages/home/home.page.html -->
+
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>
+      Hola, {{ usuario?.nombre || 'Usuario' }}
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="ion-padding">
+    
+    <!-- Resumen del Mes -->
+    <div class="section-header">
+      <h2>
+        <ion-icon name="calendar-outline"></ion-icon>
+        {{ mesActual }} {{ anioActual }}
+      </h2>
+    </div>
+
+    <!-- Cards de Resumen -->
+    <ion-grid>
+      <ion-row>
+        <!-- Balance -->
+        <ion-col size="12">
+          <ion-card class="card-balance">
+            <ion-card-content>
+              <div class="card-label">Balance Actual</div>
+              <div class="card-amount" [ngClass]="colorBalance">
+                ${{ balance.toFixed(2) }}
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+
+        <!-- Ingresos -->
+        <ion-col size="6">
+          <ion-card class="card-ingresos" (click)="navegarA('ingresos')">
+            <ion-card-content>
+              <ion-icon name="trending-up-outline" class="card-icon"></ion-icon>
+              <div class="card-label">Ingresos</div>
+              <div class="card-amount">${{ totalIngresos.toFixed(2) }}</div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+
+        <!-- Gastos -->
+        <ion-col size="6">
+          <ion-card class="card-gastos" (click)="navegarA('gastos')">
+            <ion-card-content>
+              <ion-icon name="trending-down-outline" class="card-icon"></ion-icon>
+              <div class="card-label">Gastos</div>
+              <div class="card-amount">${{ totalGastos.toFixed(2) }}</div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <!-- Alertas de Presupuestos -->
+    <div *ngIf="alertasPresupuesto.length > 0">
+      <div class="section-header">
+        <h3>
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          Alertas de Presupuestos
+        </h3>
+      </div>
+
+      <ion-card *ngFor="let alerta of alertasPresupuesto" class="alerta-card">
+        <ion-card-content>
+          <div class="alerta-header">
+            <ion-chip [color]="alerta.tipo === 'excedido' ? 'danger' : 'warning'">
+              {{ alerta.tipo === 'excedido' ? 'Excedido' : 'Alerta' }}
+            </ion-chip>
+            <strong>{{ alerta.resumen.presupuesto.categoria }}</strong>
+          </div>
+          <div class="alerta-info">
+            <span>Gastado: ${{ alerta.resumen.gastado.toFixed(2) }}</span>
+            <span>Presupuesto: ${{ alerta.resumen.presupuesto.montoAsignado.toFixed(2) }}</span>
+          </div>
+          <div class="progress-bar">
+            <div 
+              class="progress-fill" 
+              [style.width.%]="alerta.resumen.porcentajeUsado > 100 ? 100 : alerta.resumen.porcentajeUsado"
+              [ngClass]="alerta.tipo === 'excedido' ? 'danger' : 'warning'"
+            ></div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Últimas Transacciones -->
+    <div class="section-header">
+      <h3>Últimas Transacciones</h3>
+    </div>
+
+    <!-- Últimos Gastos -->
+    <div *ngIf="ultimosGastos.length > 0">
+      <h4 class="subsection-title">
+        <ion-icon name="remove-circle-outline" color="danger"></ion-icon>
+        Gastos Recientes
+      </h4>
+      <ion-card>
+        <ion-list>
+          <ion-item *ngFor="let gasto of ultimosGastos" lines="full">
+            <div class="transaccion-item">
+              <div class="transaccion-info">
+                <strong>{{ gasto.categoria }}</strong>
+                <small>{{ formatearFecha(gasto.fecha) }}</small>
+              </div>
+              <div class="transaccion-monto text-gasto">
+                -${{ gasto.monto.toFixed(2) }}
+              </div>
+            </div>
+          </ion-item>
+        </ion-list>
+      </ion-card>
+    </div>
+
+    <!-- Últimos Ingresos -->
+    <div *ngIf="ultimosIngresos.length > 0">
+      <h4 class="subsection-title">
+        <ion-icon name="add-circle-outline" color="success"></ion-icon>
+        Ingresos Recientes
+      </h4>
+      <ion-card>
+        <ion-list>
+          <ion-item *ngFor="let ingreso of ultimosIngresos" lines="full">
+            <div class="transaccion-item">
+              <div class="transaccion-info">
+                <strong>{{ ingreso.fuente }}</strong>
+                <small>{{ formatearFecha(ingreso.fecha) }}</small>
+              </div>
+              <div class="transaccion-monto text-ingreso">
+                +${{ ingreso.monto.toFixed(2) }}
+              </div>
+            </div>
+          </ion-item>
+        </ion-list>
+      </ion-card>
+    </div>
+
+    <!-- Mensaje si no hay transacciones -->
+    <div *ngIf="ultimosGastos.length === 0 && ultimosIngresos.length === 0 && !cargando" class="empty-state">
+      <ion-icon name="wallet-outline"></ion-icon>
+      <p>No hay transacciones registradas</p>
+      <ion-button (click)="navegarA('gastos')">Agregar Gasto</ion-button>
+      <ion-button fill="outline" (click)="navegarA('ingresos')">Agregar Ingreso</ion-button>
+    </div>
+
+  </div>
+</ion-content>

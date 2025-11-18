@@ -1,0 +1,104 @@
+// src/app/pages/ingresos/ingresos.page.scss
+
+.resumen-card {
+  margin: 0 0 1rem 0;
+  
+  .resumen-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    
+    .label {
+      font-size: 1rem;
+      color: var(--ion-color-medium);
+    }
+    
+    .monto {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--ion-color-success);
+    }
+  }
+}
+
+.ingreso-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  
+  .fuente-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    
+    ion-icon {
+      font-size: 1.5rem;
+      color: white;
+    }
+  }
+  
+  .ingreso-info {
+    flex: 1;
+    min-width: 0;
+    
+    .ingreso-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.25rem;
+      
+      strong {
+        font-size: 1rem;
+      }
+      
+      .ingreso-monto {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--ion-color-success);
+      }
+    }
+    
+    .ingreso-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      
+      small {
+        font-size: 0.85rem;
+        color: var(--ion-color-medium);
+      }
+      
+      .ingreso-fecha {
+        color: var(--ion-color-medium-shade);
+      }
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  
+  ion-icon {
+    font-size: 5rem;
+    color: var(--ion-color-medium);
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+    margin-bottom: 1.5rem;
+  }
+}
+
+ion-fab {
+  margin-bottom: 1rem;
+  margin-right: 1rem;
+}

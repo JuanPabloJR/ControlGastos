@@ -1,0 +1,124 @@
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="login-container">
+    
+    <!-- Logo y Título -->
+    <div class="header-section">
+      <ion-icon name="wallet" class="logo-icon"></ion-icon>
+      <h1 class="app-title">Control de Gastos</h1>
+      <p class="app-subtitle">Administra tus finanzas personales</p>
+    </div>
+
+    <!-- Formulario de Login -->
+    <ion-card *ngIf="!esRegistro">
+      <ion-card-header>
+        <ion-card-title>Iniciar Sesión</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+
+        <ion-item>
+          <ion-icon name="mail-outline" slot="start"></ion-icon>
+          <ion-input
+            label="Email"
+            labelPlacement="floating"
+            type="email"
+            [(ngModel)]="email"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+          <ion-input
+            label="Contraseña"
+            labelPlacement="floating"
+            type="password"
+            [(ngModel)]="password"
+          ></ion-input>
+        </ion-item>
+
+        <ion-button 
+          expand="block" 
+          (click)="login()" 
+          [disabled]="cargando"
+          class="ion-margin-top"
+        >
+          <ion-icon name="log-in-outline" slot="start" *ngIf="!cargando"></ion-icon>
+          <ion-spinner *ngIf="cargando" name="crescent"></ion-spinner>
+          {{ cargando ? 'Ingresando...' : 'Iniciar Sesión' }}
+        </ion-button>
+
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          (click)="cambiarModo()"
+          class="ion-margin-top"
+        >
+          ¿No tienes cuenta? Regístrate
+        </ion-button>
+
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Formulario de Registro -->
+    <ion-card *ngIf="esRegistro">
+      <ion-card-header>
+        <ion-card-title>Crear Cuenta</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+
+        <ion-item>
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+          <ion-input
+            label="Nombre completo"
+            labelPlacement="floating"
+            type="text"
+            [(ngModel)]="nombre"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-icon name="mail-outline" slot="start"></ion-icon>
+          <ion-input
+            label="Email"
+            labelPlacement="floating"
+            type="email"
+            [(ngModel)]="email"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+          <ion-input
+            label="Contraseña"
+            labelPlacement="floating"
+            type="password"
+            [(ngModel)]="password"
+          ></ion-input>
+        </ion-item>
+
+        <ion-button 
+          expand="block" 
+          (click)="registrar()" 
+          [disabled]="cargando"
+          class="ion-margin-top"
+        >
+          <ion-icon name="person-add-outline" slot="start" *ngIf="!cargando"></ion-icon>
+          <ion-spinner *ngIf="cargando" name="crescent"></ion-spinner>
+          {{ cargando ? 'Creando cuenta...' : 'Registrarse' }}
+        </ion-button>
+
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          (click)="cambiarModo()"
+          class="ion-margin-top"
+        >
+          ¿Ya tienes cuenta? Inicia sesión
+        </ion-button>
+
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+</ion-content>

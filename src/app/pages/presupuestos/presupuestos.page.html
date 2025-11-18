@@ -1,0 +1,263 @@
+<!-- src/app/pages/presupuestos/presupuestos.page.html -->
+
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Presupuestos</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="ion-padding">
+    
+    <!-- Resumen Global -->
+    <ion-card class="resumen-global">
+      <ion-card-content>
+        <h3>Resumen General</h3>
+        
+        <ion-grid>
+          <ion-row>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-label">Presupuestado</div>
+                <div class="stat-value primary">
+                  ${{ estadisticas.totalPresupuestado.toFixed(2) }}
+                </div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-label">Gastado</div>
+                <div class="stat-value danger">
+                  ${{ estadisticas.totalGastado.toFixed(2) }}
+                </div>
+              </div>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-label">Disponible</div>
+                <div class="stat-value success">
+                  ${{ estadisticas.totalDisponible.toFixed(2) }}
+                </div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-label">Uso Global</div>
+                <div class="stat-value">
+                  {{ estadisticas.porcentajeGlobalUsado.toFixed(1) }}%
+                </div>
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+
+        <div class="progress-global">
+          <ion-progress-bar 
+            [value]="estadisticas.porcentajeGlobalUsado / 100"
+            [color]="getColorProgreso(estadisticas.porcentajeGlobalUsado, estadisticas.totalGastado > estadisticas.totalPresupuestado)"
+          ></ion-progress-bar>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Lista de Presupuestos -->
+    <div *ngIf="resumenes.length > 0">
+      <h3 class="section-title">
+        <ion-icon name="pie-chart-outline"></ion-icon>
+        Presupuestos por Categoría
+      </h3>
+
+      <ion-list>
+        <ion-item-sliding *ngFor="let resumen of resumenes">
+          <ion-item lines="full">
+            <div class="presupuesto-item">
+              <!-- Icono de categoría -->
+              <div 
+                class="categoria-icon" 
+                [style.background-color]="obtenerColorCategoria(resumen.presupuesto.categoria)"
+              >
+                <ion-icon [name]="obtenerIconoCategoria(resumen.presupuesto.categoria)"></ion-icon>
+              </div>
+              
+              <!-- Información del presupuesto -->
+              <div class="presupuesto-info">
+                <div class="presupuesto-header">
+                  <div>
+                    <strong>{{ resumen.presupuesto.categoria }}</strong>
+                    <ion-chip 
+                      [color]="getEstadoChip(resumen).color" 
+                      size="small"
+                    >
+                      {{ getEstadoChip(resumen).texto }}
+                    </ion-chip>
+                  </div>
+                </div>
+                
+                <div class="presupuesto-montos">
+                  <span class="gastado">
+                    ${{ resumen.gastado.toFixed(2) }}
+                  </span>
+                  <span class="separador">/</span>
+                  <span class="total">
+                    ${{ resumen.presupuesto.montoAsignado.toFixed(2) }}
+                  </span>
+                </div>
+                
+                <div class="presupuesto-progress">
+                  <ion-progress-bar 
+                    [value]="resumen.porcentajeUsado > 100 ? 1 : resumen.porcentajeUsado / 100"
+                    [color]="getColorProgreso(resumen.porcentajeUsado, resumen.excedido)"
+                  ></ion-progress-bar>
+                  <span class="porcentaje-texto">
+                    {{ resumen.porcentajeUsado.toFixed(1) }}%
+                  </span>
+                </div>
+                
+                <div class="presupuesto-disponible" *ngIf="!resumen.excedido">
+                  <small>
+                    Disponible: ${{ resumen.disponible.toFixed(2) }}
+                  </small>
+                </div>
+                <div class="presupuesto-excedido" *ngIf="resumen.excedido">
+                  <small>
+                    <ion-icon name="alert-circle-outline"></ion-icon>
+                    Excedido por: ${{ (resumen.gastado - resumen.presupuesto.montoAsignado).toFixed(2) }}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </ion-item>
+          
+          <!-- Opciones de deslizar -->
+          <ion-item-options side="end">
+            <ion-item-option color="primary" (click)="abrirModalEditar(resumen)">
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-item-option>
+            <ion-item-option color="danger" (click)="confirmarEliminar(resumen)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+      </ion-list>
+    </div>
+
+    <!-- Estado vacío -->
+    <div *ngIf="resumenes.length === 0" class="empty-state">
+      <ion-icon name="pie-chart-outline"></ion-icon>
+      <p>No hay presupuestos configurados</p>
+      <p class="subtitle">
+        Crea presupuestos para controlar tus gastos por categoría
+      </p>
+      <ion-button (click)="abrirModalNuevo()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Crear primer presupuesto
+      </ion-button>
+    </div>
+
+  </div>
+
+  <!-- Botón flotante -->
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="abrirModalNuevo()">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <!-- Modal de Crear/Editar -->
+  <ion-modal [isOpen]="mostrarModal" (didDismiss)="cerrarModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>{{ modoEdicion ? 'Editar Presupuesto' : 'Nuevo Presupuesto' }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="cerrarModal()">
+              <ion-icon name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-select
+            label="Categoría"
+            labelPlacement="floating"
+            [(ngModel)]="nuevoPresupuesto.categoria"
+            placeholder="Selecciona una categoría"
+          >
+            <ion-select-option *ngFor="let cat of categorias" [value]="cat.nombre">
+              {{ cat.nombre }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            label="Monto del presupuesto"
+            labelPlacement="floating"
+            type="number"
+            [(ngModel)]="nuevoPresupuesto.montoAsignado"
+            placeholder="0.00"
+          >
+            <div slot="start">$</div>
+          </ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-select
+            label="Periodo"
+            labelPlacement="floating"
+            [(ngModel)]="nuevoPresupuesto.periodo"
+          >
+            <ion-select-option value="semanal">Semanal</ion-select-option>
+            <ion-select-option value="mensual">Mensual</ion-select-option>
+            <ion-select-option value="anual">Anual</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-toggle [(ngModel)]="nuevoPresupuesto.alertaActivada">
+            <ion-label>Activar alertas</ion-label>
+          </ion-toggle>
+        </ion-item>
+
+        <ion-item *ngIf="nuevoPresupuesto.alertaActivada">
+          <ion-input
+            label="Alertar al alcanzar (%)"
+            labelPlacement="floating"
+            type="number"
+            [(ngModel)]="nuevoPresupuesto.porcentajeAlerta"
+            min="1"
+            max="100"
+          >
+            <div slot="end">%</div>
+          </ion-input>
+        </ion-item>
+
+        <div class="info-box ion-margin-top">
+          <ion-icon name="alert-circle-outline" color="primary"></ion-icon>
+          <p>
+            Recibirás una notificación cuando tus gastos alcancen el 
+            {{ nuevoPresupuesto.porcentajeAlerta }}% del presupuesto establecido.
+          </p>
+        </div>
+
+        <ion-button 
+          expand="block" 
+          (click)="guardarPresupuesto()"
+          class="ion-margin-top"
+        >
+          <ion-icon name="save-outline" slot="start"></ion-icon>
+          {{ modoEdicion ? 'Actualizar' : 'Crear Presupuesto' }}
+        </ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+</ion-content>

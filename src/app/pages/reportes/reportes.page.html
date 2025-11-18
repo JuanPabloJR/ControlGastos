@@ -1,0 +1,141 @@
+<!-- src/app/pages/reportes/reportes.page.html -->
+
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Reportes y Análisis</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="ion-padding">
+    
+    <!-- Selector de Periodo -->
+    <ion-card>
+      <ion-card-content>
+        <ion-segment [(ngModel)]="periodoSeleccionado" (ionChange)="onCambioPeriodo($event)">
+          <ion-segment-button value="mes">
+            <ion-label>Mes</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="año">
+            <ion-label>Año</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="todo">
+            <ion-label>Todo</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+
+        <!-- Selectores de Mes y Año -->
+        <ion-grid *ngIf="periodoSeleccionado === 'mes'">
+          <ion-row>
+            <ion-col size="6">
+              <ion-item lines="none">
+                <ion-select
+                  label="Mes"
+                  [(ngModel)]="mesSeleccionado"
+                  (ionChange)="onCambioMes($event)"
+                >
+                  <ion-select-option *ngFor="let mes of meses; let i = index" [value]="i">
+                    {{ mes }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <ion-item lines="none">
+                <ion-select
+                  label="Año"
+                  [(ngModel)]="anioSeleccionado"
+                  (ionChange)="onCambioAnio($event)"
+                >
+                  <ion-select-option *ngFor="let anio of anios" [value]="anio">
+                    {{ anio }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+
+        <ion-item lines="none" *ngIf="periodoSeleccionado === 'año'">
+          <ion-select
+            label="Año"
+            [(ngModel)]="anioSeleccionado"
+            (ionChange)="onCambioAnio($event)"
+          >
+            <ion-select-option *ngFor="let anio of anios" [value]="anio">
+              {{ anio }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Resumen Financiero -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Resumen Financiero</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="4" class="stat-col">
+              <div class="stat-value success">${{ totalIngresos.toFixed(2) }}</div>
+              <div class="stat-label">Ingresos</div>
+            </ion-col>
+            <ion-col size="4" class="stat-col">
+              <div class="stat-value danger">${{ totalGastos.toFixed(2) }}</div>
+              <div class="stat-label">Gastos</div>
+            </ion-col>
+            <ion-col size="4" class="stat-col">
+              <div class="stat-value" [ngClass]="balance >= 0 ? 'success' : 'danger'">
+                ${{ balance.toFixed(2) }}
+              </div>
+              <div class="stat-label">Balance</div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Gráfico: Gastos por Categoría -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Gastos por Categoría</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="chart-container">
+          <canvas #chartGastosCategorias></canvas>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Gráfico: Ingresos vs Gastos -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Ingresos vs Gastos</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="chart-container">
+          <canvas #chartIngresosVsGastos></canvas>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Gráfico: Gastos por Mes (solo para vista anual) -->
+    <ion-card *ngIf="periodoSeleccionado === 'año'">
+      <ion-card-header>
+        <ion-card-title>Gastos Mensuales</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="chart-container">
+          <canvas #chartGastosMes></canvas>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+</ion-content>

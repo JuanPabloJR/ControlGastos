@@ -1,0 +1,78 @@
+// src/theme/variables.scss
+
+:root {
+  /** Colores principales **/
+  --ion-color-primary: #3880ff;
+  --ion-color-primary-rgb: 56, 128, 255;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #3171e0;
+  --ion-color-primary-tint: #4c8dff;
+
+  /** Colores de éxito (ingresos) **/
+  --ion-color-success: #2ecc71;
+  --ion-color-success-rgb: 46, 204, 113;
+  --ion-color-success-shade: #28b463;
+  --ion-color-success-tint: #43d97f;
+
+  /** Colores de peligro (gastos) **/
+  --ion-color-danger: #e74c3c;
+  --ion-color-danger-rgb: 231, 76, 60;
+  --ion-color-danger-shade: #c0392b;
+  --ion-color-danger-tint: #ea6153;
+
+  /** Colores de advertencia (presupuestos) **/
+  --ion-color-warning: #f39c12;
+  --ion-color-warning-rgb: 243, 156, 18;
+  --ion-color-warning-shade: #e67e22;
+  --ion-color-warning-tint: #f5ab35;
+
+  /** Color personalizado para balance **/
+  --ion-color-balance: #3498db;
+  --ion-color-balance-rgb: 52, 152, 219;
+  --ion-color-balance-contrast: #ffffff;
+  --ion-color-balance-contrast-rgb: 255, 255, 255;
+  --ion-color-balance-shade: #2c81ba;
+  --ion-color-balance-tint: #48a5df;
+}
+
+/** Clase personalizada para balance **/
+.ion-color-balance {
+  --ion-color-base: var(--ion-color-balance);
+  --ion-color-base-rgb: var(--ion-color-balance-rgb);
+  --ion-color-contrast: var(--ion-color-balance-contrast);
+  --ion-color-contrast-rgb: var(--ion-color-balance-contrast-rgb);
+  --ion-color-shade: var(--ion-color-balance-shade);
+  --ion-color-tint: var(--ion-color-balance-tint);
+}
+
+/** Estilos globales personalizados **/
+.card-balance {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.card-ingresos {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: white;
+}
+
+.card-gastos {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+}
+
+.text-ingreso {
+  color: var(--ion-color-success);
+  font-weight: 600;
+}
+
+.text-gasto {
+  color: var(--ion-color-danger);
+  font-weight: 600;
+}
+
+.text-balance {
+  color: var(--ion-color-balance);
+  font-weight: 600;
+}
