@@ -10,16 +10,17 @@ import {
   IonButtons, IonInput, IonSelect, IonSelectOption, IonToggle,
   IonRefresher, IonRefresherContent, IonProgressBar, IonBadge,
   AlertController, ToastController, IonItemSliding, IonItemOptions,
-  IonItemOption, IonGrid, IonRow, IonCol
+  IonItemOption, IonGrid, IonRow, IonCol, Platform
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   addOutline, closeOutline, saveOutline, trashOutline,
   createOutline, pieChartOutline, alertCircleOutline,
-  checkmarkCircleOutline, warningOutline
+  checkmarkCircleOutline, warningOutline, bugOutline
 } from 'ionicons/icons';
 import { PresupuestosService } from '../../services/presupuestos';
 import { GastosService } from '../../services/gastos';
+import { StorageService } from '../../services/storage.service';
 import { Presupuesto, ResumenPresupuesto } from '../../models/presupuesto';
 import { CategoriaGasto } from '../../models/gasto';
 
@@ -41,6 +42,7 @@ import { CategoriaGasto } from '../../models/gasto';
 export class PresupuestosPage implements OnInit {
   resumenes: ResumenPresupuesto[] = [];
   categorias: CategoriaGasto[] = [];
+  cargando = true;
   
   // Estadísticas globales
   estadisticas = {
@@ -70,29 +72,73 @@ export class PresupuestosPage implements OnInit {
   constructor(
     private presupuestosService: PresupuestosService,
     private gastosService: GastosService,
+    private storage: StorageService,
     private alertController: AlertController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private platform: Platform
   ) {
     addIcons({
       addOutline, closeOutline, saveOutline, trashOutline,
       createOutline, pieChartOutline, alertCircleOutline,
-      checkmarkCircleOutline, warningOutline
+      checkmarkCircleOutline, warningOutline, bugOutline
     });
   }
 
   async ngOnInit() {
+    console.log('📄 PresupuestosPage ngOnInit');
+    
+    // CRÍTICO: Esperar a que Storage esté listo
+    await this.platform.ready();
+    await this.storage.init();
+    
     this.mesActual = this.presupuestosService.obtenerMesActual();
     this.anioActual = this.presupuestosService.obtenerAnioActual();
+    
     await this.cargarDatos();
+    this.cargando = false;
   }
 
   async cargarDatos() {
-    this.categorias = await this.gastosService.obtenerCategorias();
-    this.resumenes = await this.presupuestosService.calcularResumenTodosPresupuestos();
-    this.estadisticas = await this.presupuestosService.obtenerEstadisticasPresupuestos();
+    console.log('🔄 Cargando datos de presupuestos...');
     
-    // Ordenar por porcentaje usado (más críticos primero)
-    this.resumenes.sort((a, b) => b.porcentajeUsado - a.porcentajeUsado);
+    try {
+      // Cargar categorías
+      this.categorias = await this.gastosService.obtenerCategorias();
+      console.log(`✅ Categorías cargadas: ${this.categorias.length}`);
+      
+      // Cargar resúmenes de presupuestos
+      this.resumenes = await this.presupuestosService.calcularResumenTodosPresupuestos();
+      console.log(`✅ Resúmenes cargados: ${this.resumenes.length}`);
+      
+      // Cargar estadísticas
+      this.estadisticas = await this.presupuestosService.obtenerEstadisticasPresupuestos();
+      console.log('✅ Estadísticas cargadas:', this.estadisticas);
+      
+      // Ordenar por porcentaje usado (más críticos primero)
+      this.resumenes.sort((a, b) => b.porcentajeUsado - a.porcentajeUsado);
+      
+      // Debug en dispositivos móviles
+      if (this.platform.is('capacitor')) {
+        console.log('📱 === DEBUG PRESUPUESTOS ===');
+        console.log('📊 Resúmenes:', this.resumenes);
+        console.log('📊 Estadísticas:', this.estadisticas);
+        
+        if (this.resumenes.length === 0) {
+          console.warn('⚠️ No hay presupuestos cargados');
+          console.warn('⚠️ Verifica que los datos existan en Storage');
+          
+          // Verificar Storage directamente
+          const keys = await this.storage.keys();
+          const presupuestosKeys = keys.filter(k => k.startsWith('presupuestos_'));
+          console.log(`🔑 Claves de presupuestos en Storage: ${presupuestosKeys.length}`, presupuestosKeys);
+        }
+        console.log('📱 === FIN DEBUG ===');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error cargando datos:', error);
+      this.mostrarToast('Error al cargar los datos', 'danger');
+    }
   }
 
   abrirModalNuevo() {
@@ -140,6 +186,7 @@ export class PresupuestosPage implements OnInit {
 
     try {
       if (this.modoEdicion && this.presupuestoEditando) {
+        console.log('📝 Actualizando presupuesto:', this.presupuestoEditando.id);
         await this.presupuestosService.actualizarPresupuesto(
           this.presupuestoEditando.id,
           {
@@ -152,7 +199,8 @@ export class PresupuestosPage implements OnInit {
         );
         this.mostrarToast('Presupuesto actualizado correctamente', 'success');
       } else {
-        await this.presupuestosService.crearPresupuesto({
+        console.log('➕ Creando nuevo presupuesto');
+        const nuevo = await this.presupuestosService.crearPresupuesto({
           categoria: this.nuevoPresupuesto.categoria,
           montoAsignado: this.nuevoPresupuesto.montoAsignado,
           periodo: this.nuevoPresupuesto.periodo,
@@ -161,12 +209,14 @@ export class PresupuestosPage implements OnInit {
           alertaActivada: this.nuevoPresupuesto.alertaActivada,
           porcentajeAlerta: this.nuevoPresupuesto.porcentajeAlerta
         });
+        console.log('✅ Presupuesto creado:', nuevo.id);
         this.mostrarToast('Presupuesto creado correctamente', 'success');
       }
 
       await this.cargarDatos();
       this.cerrarModal();
     } catch (error) {
+      console.error('❌ Error al guardar presupuesto:', error);
       this.mostrarToast('Error al guardar el presupuesto', 'danger');
     }
   }
@@ -195,17 +245,67 @@ export class PresupuestosPage implements OnInit {
 
   async eliminarPresupuesto(id: string) {
     try {
+      console.log('🗑️ Eliminando presupuesto:', id);
       await this.presupuestosService.eliminarPresupuesto(id);
       this.mostrarToast('Presupuesto eliminado correctamente', 'success');
       await this.cargarDatos();
     } catch (error) {
+      console.error('❌ Error al eliminar presupuesto:', error);
       this.mostrarToast('Error al eliminar el presupuesto', 'danger');
     }
   }
 
   async refrescar(event: any) {
+    console.log('🔄 Refrescando datos...');
     await this.cargarDatos();
     event.target.complete();
+  }
+
+  // ========== MÉTODO DE DEBUG (TEMPORAL) ==========
+  async testStorageDirecto() {
+    console.log('🧪 === TEST DIRECTO DE STORAGE ===');
+    
+    try {
+      // Test 1: Verificar Storage
+      const keys = await this.storage.keys();
+      console.log(`🔑 Total claves: ${keys.length}`, keys);
+      
+      // Test 2: Crear presupuesto de prueba
+      const presupuestoTest = {
+        id: 'test_' + Date.now(),
+        categoria: 'Alimentación',
+        montoAsignado: 500,
+        periodo: 'mensual' as 'mensual',
+        mes: this.mesActual,
+        anio: this.anioActual,
+        alertaActivada: true,
+        porcentajeAlerta: 80,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await this.storage.set('presupuestos_' + presupuestoTest.id, presupuestoTest);
+      console.log('✅ Presupuesto de prueba guardado');
+      
+      // Test 3: Leer presupuesto
+      const leido = await this.storage.get('presupuestos_' + presupuestoTest.id);
+      console.log('📖 Presupuesto leído:', leido);
+      
+      // Test 4: Listar todos
+      const todosPresupuestos = await this.storage.getAllByPrefix('presupuestos_');
+      console.log('📦 Total presupuestos:', todosPresupuestos.length, todosPresupuestos);
+      
+      // Test 5: Recargar datos
+      await this.cargarDatos();
+      
+      this.mostrarToast('Test completado - Ver consola', 'success');
+      
+    } catch (error) {
+      console.error('❌ Error en test:', error);
+      this.mostrarToast('Error en test - Ver consola', 'danger');
+    }
+    
+    console.log('🧪 === FIN TEST ===');
   }
 
   getColorProgreso(porcentaje: number, excedido: boolean): string {

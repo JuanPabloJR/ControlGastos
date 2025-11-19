@@ -1,7 +1,7 @@
 // src/app/services/notificaciones.service.ts
 
 import { Injectable } from '@angular/core';
-import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { PresupuestosService } from './presupuestos';
 import { Platform } from '@ionic/angular/standalone';
 
@@ -10,6 +10,7 @@ import { Platform } from '@ionic/angular/standalone';
 })
 export class NotificacionesService {
   private notificacionesHabilitadas = false;
+  private plataformaLista = false;
 
   constructor(
     private presupuestosService: PresupuestosService,
@@ -20,6 +21,10 @@ export class NotificacionesService {
 
   // ========== INICIALIZACIÓN ==========
   async inicializar() {
+    // Esperar a que la plataforma esté lista
+    await this.platform.ready();
+    this.plataformaLista = true;
+    
     // Solo en dispositivos móviles
     if (this.platform.is('capacitor')) {
       await this.solicitarPermisos();
@@ -28,9 +33,21 @@ export class NotificacionesService {
   }
 
   async solicitarPermisos(): Promise<boolean> {
+    if (!this.platform.is('capacitor')) {
+      console.log('Notificaciones solo disponibles en Capacitor');
+      return false;
+    }
+
     try {
       const permiso = await LocalNotifications.requestPermissions();
       this.notificacionesHabilitadas = permiso.display === 'granted';
+      
+      if (this.notificacionesHabilitadas) {
+        console.log('✅ Permisos de notificaciones concedidos');
+      } else {
+        console.log('❌ Permisos de notificaciones denegados');
+      }
+      
       return this.notificacionesHabilitadas;
     } catch (error) {
       console.error('Error solicitando permisos de notificaciones:', error);
@@ -39,55 +56,73 @@ export class NotificacionesService {
   }
 
   async configurarListeners() {
+    if (!this.platform.is('capacitor')) return;
+
     // Listener cuando se toca una notificación
     await LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
-      console.log('Notificación tocada:', notification);
-      // Aquí puedes navegar a una página específica si lo deseas
+      console.log('📱 Notificación tocada:', notification);
     });
   }
 
   // ========== NOTIFICACIONES DE PRESUPUESTOS ==========
   async verificarYNotificarPresupuestos(): Promise<void> {
-    if (!this.notificacionesHabilitadas && !this.platform.is('capacitor')) {
-      // En web, mostrar notificaciones del navegador
+    if (!this.plataformaLista) {
+      console.log('⏳ Esperando a que la plataforma esté lista...');
+      await this.platform.ready();
+      this.plataformaLista = true;
+    }
+
+    if (!this.platform.is('capacitor')) {
+      console.log('🌐 Modo Web - Usando notificaciones del navegador');
       this.verificarPresupuestosWeb();
+      return;
+    }
+
+    if (!this.notificacionesHabilitadas) {
+      console.log('⚠️ Notificaciones no habilitadas');
       return;
     }
 
     const alertas = await this.presupuestosService.verificarAlertas();
     
-    if (alertas.length === 0) return;
+    if (alertas.length === 0) {
+      console.log('✅ No hay alertas de presupuestos');
+      return;
+    }
 
-    const notificaciones: ScheduleOptions = {
-      notifications: []
-    };
+    console.log(`📊 ${alertas.length} alertas de presupuesto encontradas`);
 
-    alertas.forEach((alerta, index) => {
+    for (let index = 0; index < alertas.length; index++) {
+      const alerta = alertas[index];
       const esExcedido = alerta.tipo === 'excedido';
       const categoria = alerta.resumen.presupuesto.categoria;
       const porcentaje = alerta.resumen.porcentajeUsado.toFixed(1);
 
-      notificaciones.notifications.push({
-        id: Date.now() + index,
-        title: esExcedido ? '⚠️ Presupuesto Excedido' : '⚡ Alerta de Presupuesto',
-        body: esExcedido
-          ? `Has excedido el presupuesto de ${categoria} en un ${porcentaje}%`
-          : `Tu presupuesto de ${categoria} está al ${porcentaje}%`,
-        schedule: { at: new Date(Date.now() + 1000) }, // 1 segundo después
-        sound: undefined,
-        attachments: undefined,
-        actionTypeId: '',
-        extra: {
-          categoria: categoria,
-          tipo: alerta.tipo
-        }
-      });
-    });
+      try {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: esExcedido ? '⚠️ Presupuesto Excedido' : '⚡ Alerta de Presupuesto',
+              body: esExcedido
+                ? `Has excedido el presupuesto de ${categoria} en un ${porcentaje}%`
+                : `Tu presupuesto de ${categoria} está al ${porcentaje}%`,
+              id: Date.now() + index,
+              schedule: { at: new Date(Date.now() + 1000 * (index + 1)) }, // 1 segundo entre cada una
+              sound: undefined,
+              attachments: undefined,
+              actionTypeId: '',
+              extra: {
+                categoria: categoria,
+                tipo: alerta.tipo
+              }
+            }
+          ]
+        });
 
-    try {
-      await LocalNotifications.schedule(notificaciones);
-    } catch (error) {
-      console.error('Error programando notificaciones:', error);
+        console.log(`✅ Notificación programada para ${categoria}`);
+      } catch (error) {
+        console.error('❌ Error programando notificación:', error);
+      }
     }
   }
 
@@ -124,7 +159,13 @@ export class NotificacionesService {
 
   // ========== NOTIFICACIÓN INMEDIATA ==========
   async mostrarNotificacion(titulo: string, mensaje: string): Promise<void> {
+    if (!this.plataformaLista) {
+      await this.platform.ready();
+      this.plataformaLista = true;
+    }
+
     if (!this.platform.is('capacitor')) {
+      console.log('🌐 Notificación Web:', titulo, mensaje);
       // Notificación web
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(titulo, {
@@ -135,14 +176,23 @@ export class NotificacionesService {
       return;
     }
 
+    if (!this.notificacionesHabilitadas) {
+      console.log('⚠️ Notificaciones no habilitadas');
+      const permisoOtorgado = await this.solicitarPermisos();
+      if (!permisoOtorgado) {
+        console.log('❌ Usuario no otorgó permisos');
+        return;
+      }
+    }
+
     try {
       await LocalNotifications.schedule({
         notifications: [
           {
-            id: Date.now(),
             title: titulo,
             body: mensaje,
-            schedule: { at: new Date(Date.now() + 1000) },
+            id: Math.floor(Math.random() * 100000),
+            schedule: { at: new Date(Date.now() + 1000) }, // 1 segundo después
             sound: undefined,
             attachments: undefined,
             actionTypeId: '',
@@ -150,25 +200,31 @@ export class NotificacionesService {
           }
         ]
       });
+
+      console.log('✅ Notificación programada exitosamente');
     } catch (error) {
-      console.error('Error mostrando notificación:', error);
+      console.error('❌ Error mostrando notificación:', error);
     }
   }
 
   // ========== NOTIFICACIÓN DE RECORDATORIO ==========
   async programarRecordatorio(titulo: string, mensaje: string, fecha: Date): Promise<void> {
     if (!this.platform.is('capacitor')) {
-      console.log('Recordatorios solo disponibles en dispositivos móviles');
+      console.log('🌐 Recordatorios solo disponibles en dispositivos móviles');
       return;
+    }
+
+    if (!this.notificacionesHabilitadas) {
+      await this.solicitarPermisos();
     }
 
     try {
       await LocalNotifications.schedule({
         notifications: [
           {
-            id: Date.now(),
             title: titulo,
             body: mensaje,
+            id: Math.floor(Math.random() * 100000),
             schedule: { at: fecha },
             sound: undefined,
             attachments: undefined,
@@ -177,16 +233,21 @@ export class NotificacionesService {
           }
         ]
       });
+      console.log('✅ Recordatorio programado para:', fecha);
     } catch (error) {
-      console.error('Error programando recordatorio:', error);
+      console.error('❌ Error programando recordatorio:', error);
     }
   }
 
   // ========== NOTIFICACIONES DIARIAS ==========
-  async programarResumenDiario(hora: number = 16): Promise<void> {
+  async programarResumenDiario(hora: number = 20): Promise<void> {
     if (!this.platform.is('capacitor')) return;
 
-    // Programar notificación diaria a las 8 PM (por ejemplo)
+    if (!this.notificacionesHabilitadas) {
+      await this.solicitarPermisos();
+    }
+
+    // Programar notificación diaria a la hora especificada
     const ahora = new Date();
     const horaNotificacion = new Date(
       ahora.getFullYear(),
@@ -206,9 +267,9 @@ export class NotificacionesService {
       await LocalNotifications.schedule({
         notifications: [
           {
-            id: 999, // ID fijo para el resumen diario
             title: '📊 Resumen del Día',
             body: 'Revisa tu actividad financiera de hoy',
+            id: 999, // ID fijo para el resumen diario
             schedule: {
               at: horaNotificacion,
               every: 'day'
@@ -220,8 +281,9 @@ export class NotificacionesService {
           }
         ]
       });
+      console.log('✅ Resumen diario programado para las', hora + ':00');
     } catch (error) {
-      console.error('Error programando resumen diario:', error);
+      console.error('❌ Error programando resumen diario:', error);
     }
   }
 
@@ -230,8 +292,9 @@ export class NotificacionesService {
 
     try {
       await LocalNotifications.cancel({ notifications: [{ id: 999 }] });
+      console.log('✅ Resumen diario cancelado');
     } catch (error) {
-      console.error('Error cancelando resumen diario:', error);
+      console.error('❌ Error cancelando resumen diario:', error);
     }
   }
 
@@ -241,8 +304,9 @@ export class NotificacionesService {
 
     try {
       await LocalNotifications.removeAllDeliveredNotifications();
+      console.log('✅ Todas las notificaciones limpiadas');
     } catch (error) {
-      console.error('Error limpiando notificaciones:', error);
+      console.error('❌ Error limpiando notificaciones:', error);
     }
   }
 
@@ -254,8 +318,11 @@ export class NotificacionesService {
 
     try {
       const permiso = await LocalNotifications.checkPermissions();
-      return permiso.display === 'granted';
+      const habilitadas = permiso.display === 'granted';
+      console.log('📊 Estado de permisos:', habilitadas ? 'Habilitados ✅' : 'No habilitados ❌');
+      return habilitadas;
     } catch (error) {
+      console.error('❌ Error verificando permisos:', error);
       return false;
     }
   }
