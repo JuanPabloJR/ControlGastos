@@ -183,8 +183,8 @@ export class ConfiguracionPage implements OnInit {
 
   async probarNotificacion() {
     await this.notificacionesService.mostrarNotificacion(
-      'Notificación de Prueba',
-      'Esta es una notificación de prueba para verificar que las notificaciones funcionan correctamente.'
+      'Activar Notificaciones',
+      'Esta notificacion verifica que las notificaciones funcionan correctamente.'
     );
     this.mostrarToast('Notificación enviada', 'success');
   }
