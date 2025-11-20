@@ -16,7 +16,8 @@ export class NotificacionesService {
     private presupuestosService: PresupuestosService,
     private platform: Platform
   ) {
-    this.inicializar();
+    // NO llamar a inicializar aquí para evitar race conditions.
+    // AppComponent se encargará de llamarlo y esperarlo.
   }
 
   // ========== INICIALIZACIÓN ==========
@@ -106,7 +107,9 @@ export class NotificacionesService {
               body: esExcedido
                 ? `Has excedido el presupuesto de ${categoria} en un ${porcentaje}%`
                 : `Tu presupuesto de ${categoria} está al ${porcentaje}%`,
-              id: Date.now() + index,
+              // ⭐ CORRECCIÓN: Generar un ID que quepa en un Java int (32-bit)
+              // Se usan los últimos 9 dígitos del tiempo actual + el índice para asegurar unicidad.
+              id: parseInt(String(Date.now()).substring(4)) + index,
               schedule: { at: new Date(Date.now() + 1000 * (index + 1)) }, // 1 segundo entre cada una
               sound: undefined,
               attachments: undefined,
